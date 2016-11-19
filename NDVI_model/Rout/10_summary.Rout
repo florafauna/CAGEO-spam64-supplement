@@ -1,0 +1,446 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list=ls())
+> source("setup.R")
+Loading required package: grid
+Spam version 2.0-05 (2016-11-19) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+gdata: read.xls support for 'XLS' (Excel 97-2004) files ENABLED.
+
+gdata: read.xls support for 'XLSX' (Excel 2007+) files ENABLED.
+
+Attaching package: ‘gdata’
+
+The following object is masked from ‘package:stats’:
+
+    nobs
+
+The following object is masked from ‘package:utils’:
+
+    object.size
+
+The following object is masked from ‘package:base’:
+
+    startsWith
+
+Loading required package: maps
+> library(fields)
+> library(xtable)
+
+Attaching package: ‘xtable’
+
+The following object is masked from ‘package:spam’:
+
+    display
+
+> load("data/data.RData")
+> load("data/out_simple.RData")
+> files <- list.files("data", pattern="out_.\\.")
+> tau <- gsub(".RData", "", gsub("out_", "", files ))
+> 
+> 
+> tmp <- vector("list", length(files))
+> for(i in seq_along(files)){
++     load(paste0("data/",files[i]))
++     tmp[[i]] <- out
++ }
+> tt <- fit_varmodel_parallel_summary(tmp)
+> 
+> 
+> 
+> 
+> ## figure fit.pdf
+> tt_plot <- tt[,2:1]
+> tt_plot <- tt_plot[tt_plot[,1]!=1 &tt_plot[,1]!=0,]
+> 
+> pdf("figs/fit.pdf", width = 7, height = 6)
+> plot(tt_plot[,1], (-(tt_plot[,2]))/2, xlab = "",
++      ylab = "", yaxt="n",pch = "+", cex = 2,
++      ylim=range(c(-(tt_plot[,2])/2, -(tt_plot_simple[,2])/2)))
+> yaxt_at <- seq(-840000, -920000, -20000)
+> axis(2,at=yaxt_at, labels = format(yaxt_at,scientific = TRUE))
+> abline(h=yaxt_at, col = "gray80", lwd=1)
+> abline(v=seq(0,1,.2), col="gray80", lwd=1)
+> points(tt_plot[,1], -(tt_plot[,2])/2, pch = "+", cex = 2)
+> points(tt_plot_simple[,1], -(tt_plot_simple[,2])/2, pch = 6, cex = 2)
+> abline(v=tt[which.min(tt[,"value"]),2], lty = 2)
+> mtext(expression(tau), 1, line = 2.2, cex = 1.5)
+> mtext("Log-likelihood", 2, line = 2.5, cex = 1.5)
+> legend("bottomright", legend = c(expression(Estimated~bold(beta)),
++                       expression(Fixed~bold(beta)==bold(0))), pch = c(3,6), cex = 1.1, bg="white")
+> dev.off()
+null device 
+          1 
+> 
+> ii <- which.min(tt[,"value"])
+> tmp[[ii]]$est
+                      pars          se estimated
+tau              0.6200000          NA     FALSE
+k                0.8973435 0.001022652      TRUE
+dem_log        -58.5338831 0.534849661      TRUE
+dist2coast_log -54.3845976 0.482950826      TRUE
+dem_var25_log   36.0523576 0.489336998      TRUE
+> tmp[[ii]]$res
+$par
+[1]   0.8973435 -58.5338831 -54.3845976  36.0523576
+
+$value
+[1] 1658336
+
+$counts
+function gradient 
+      19       19 
+
+$convergence
+[1] 0
+
+$message
+[1] "CONVERGENCE: REL_REDUCTION_OF_F <= FACTR*EPSMCH"
+
+$hessian
+             [,1]        [,2]       [,3]       [,4]
+[1,] 9.561894e+05 0.003929017 0.03600144 0.01268927
+[2,] 3.929017e-03 3.495719284 1.51980203 2.60898378
+[3,] 3.600144e-02 1.519802026 4.28740168 0.06129267
+[4,] 1.268927e-02 2.608983777 0.06129267 4.17622505
+
+> summary(tmp[[ii]]$S_diag)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.6143  0.7818  0.8572  0.9157  0.9897  2.6230 
+> 
+> 
+> 
+> load("data/R.RData")
+> X <- model_matrix(ndvi_scaled ~ 0 + dem_log + dist2coast_log + dem_var25_log,
++                   data, scale = TRUE, verbose = FALSE)
+> 
+> D0 <- diag.spam(exp(c(X %*% tmp[[ii]]$est$pars[-c(1:2)])))
+> tau <- 0.62
+> P <- R*tau + (diag.spam(ncol(R))*(1-tau))
+> #str(P)
+> 
+> s_tmp <- P %*% D0
+> s_tmp2 <- D0%*%s_tmp
+> s <- s_tmp2* tmp[[ii]]$est["k","pars"]
+> 
+> 
+> 
+> 
+> ## histogramm of diag S
+> pdf("figs/S_diag_hist.pdf", width = 7, height = 6)
+> par(mai = c(1,1,1,.2))
+> hist(diag(s), breaks = 100, xlim = c(0.5,2), main = "",
++      xlab = "", ylab = "", yaxt = "n")
+> abline(v=s_diag_simple, lty = 1, lwd = 1.5, col = "red")
+> axis(2, at = seq(0,60000, 20000), format(seq(0,60000, 20000), scientific = TRUE) )
+> axis(2, at = seq(0,60000, 10000), NA )
+> mtext(expression(diag(widehat(Sigma))), 1, line = 2.2, cex = 1.5)
+> mtext("Frequency", 2, line = 2.5, cex = 1.5)
+> dev.off()
+null device 
+          1 
+> 
+> 
+> 
+> 
+> xtable(as.data.frame(rbind(summary(tmp[[ii]]$S_diag))))
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Sat Nov 19 11:25:25 2016
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrrrr}
+  \hline
+ & Min. & 1st Qu. & Median & Mean & 3rd Qu. & Max. \\ 
+  \hline
+1 & 0.61 & 0.78 & 0.86 & 0.92 & 0.99 & 2.62 \\ 
+   \hline
+\end{tabular}
+\end{table}
+> 
+> nx <- length(unique(data$x))
+> ny <- length(unique(data$y))
+> 
+> 
+> #png("figs/ndvi.png", width = 9000, height = 3000)
+> quilt.plot.image <- function (x, y, z, nx = 64, ny = 64, grid = NULL, add.legend = TRUE, 
++     add = FALSE, col = tim.colors(256), nrow = NULL, ncol = NULL, 
++     ...) 
++ {
++     if (!is.null(nrow) | !is.null(nrow)) {
++         nx <- nrow
++         ny <- ncol
++     }
++     x <- as.matrix(x)
++     if (ncol(x) == 2) {
++         z <- y
++     }
++     if (ncol(x) == 1) {
++         x <- cbind(x, y)
++     }
++     if (ncol(x) == 3) {
++         z <- x[, 3]
++         x <- x[, 1:2]
++     }
++     out.p <- as.image(z, x = x, nx = nx, ny = ny, na.rm = TRUE, 
++         grid = grid)
++     out.p
++ }
+> 
+> color_bar <- function(zlim){
++     par(mai=c(.1,.1,.1,.7))
++     y <- seq(zlim[1], zlim[2], length.out = 1000)
++     x <- 1
++     z <- rbind(y)
++     image(x,y,z, col = tim.colors(1000), xaxt = "n", yaxt = "n",
++           xlab = "", ylab = "")
++     box()
++     axis(4, las =2)
++ }
+> 
+> 
+> xx <- sort(unique(data$x))
+> yy <- sort(unique(data$y))
+> img_ndvi <- quilt.plot.image(data[,c("x","y")], data$ndvi, nx=nx, ny=ny, add.legend = FALSE)
+> img_diags <- quilt.plot.image(data[,c("x","y")], tmp[[ii]]$S_diag, nx=nx, ny=ny, add.legend = FALSE)
+> 
+> 
+> range(data[data$x==xx[1500], "y"])
+[1] 32.20834 76.70833
+> index1 <- which(data$x==xx[1500] & round(data$y,5) ==41.04167 )
+> index2 <- which(data$x==xx[1500] & round(data$y,5) ==72.04167 )
+> 
+> 
+> img_s1 <- quilt.plot.image(data[,c("x","y")], s[index1,], nx=nx, ny=ny, add.legend = FALSE)
+> img_s1$z[ img_s1$z==0] <- NA
+> img_s2 <- quilt.plot.image(data[,c("x","y")], s[index2,], nx=nx, ny=ny, add.legend = FALSE)
+> img_s2$z[ img_s2$z==0] <- NA
+> 
+> 
+> 
+> img_diags <- quilt.plot.image(data[,c("x","y")], tmp[[ii]]$S_diag, nx=nx, ny=ny, add.legend = FALSE, zlim =c(0,max(tmp[[ii]]$S_diag)))
+> img_dist2coast_log <- quilt.plot.image(data[,c("x","y")], data$dist2coast_log, nx=nx, ny=ny, add.legend = FALSE)
+> img_dem_log <- quilt.plot.image(data[,c("x","y")], data$dem_log, nx=nx, ny=ny, add.legend = FALSE)
+> 
+> 
+> 
+> 
+> ry <- .5
+> rx <- 1.5
+> sum(img_s1$z!=0,na.rm=TRUE)
+[1] 121
+> zrange <-  c(0,max(img_s1$z, img_s2$z, na.rm = TRUE))
+> png("figs/sigma_elements1.png",
++     width = 15, height = 15, units = "cm", res = 900)
+> par(pty = "s", mai=c(.8,.8,.1,.1))
+> image(img_s1, xlim = c(108.125-rx,108.125+rx),
++       ylim = c(41.04167-ry, 41.04167+ry), col = tim.colors(1000),
++       xaxt = "n", yaxt = "n", zlim = zrange)
+> axis(1, at = seq(107, 110,1), labels = paste( seq(107, 110,1)) )
+> axis(2, at = seq(40.5, 41.5, .25), labels = paste(seq(40.5, 41.5, .25)) )
+> abline(v=c(107,108,109), lwd = 1.5)
+> abline(h=seq(40.5, 41.5, .25), col = "gray50", lwd = 1.5)
+> mtext("Longitude", 1, line = 2.2, cex = 1.2)
+> mtext("Latitude", 2, line = 2.2, cex = 1.2)
+> box(lwd = 1.5)
+> dev.off()
+null device 
+          1 
+> 
+> sum(img_s2$z!=0,na.rm=TRUE)
+[1] 292
+> png("figs/sigma_elements2.png",
++     width = 15, height = 15, units = "cm", res = 900)
+> par(pty = "s", mai=c(.8,.8,.1,.1))
+> image(img_s2, xlim = c(108.125-rx,108.125+rx),
++       ylim = c(72.04167-ry,72.04167+ry), col = tim.colors(1000),
++       xaxt = "n", yaxt = "n",zlim = zrange)
+> axis(2, at = seq(71.5, 72.5, .25), labels = paste( seq(71.5, 72.5, .25)) )
+> axis(1, at = seq(107, 110,1), labels = paste( seq(107, 110,1)) )
+> abline(v=c(107,108,109), col = "gray50", lwd = 1.5)
+> abline(h=seq(71.5, 72.5, .25), col = "gray50", lwd = 1.5)
+> mtext("Longitude", 1, line = 2.2, cex = 1.2)
+> mtext("Latitude", 2, line = 2.2, cex = 1.2)
+> box(lwd=1.5)
+> dev.off()
+null device 
+          1 
+> 
+> 
+> png("figs/sigma_elements_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(zrange)
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/ndvi.png",
++     width = 12, height = 4, units = "cm", res = 900)
+> par(mai=rep(.03,4))
+> image(img_ndvi$x, img_ndvi$y, img_ndvi$z, col = tim.colors(1000), xaxt="n",yaxt="n")
+> box()
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/ndvi_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(range(img_ndvi$z, na.rm=TRUE)*.0001)
+> dev.off()
+null device 
+          1 
+> 
+> 
+> 
+> png("figs/diags.png",
++     width = 12, height = 4, units = "cm", res = 900)
+> par(mai=rep(.03,4))
+> image(img_diags$x, img_diags$y, img_diags$z, col = tim.colors(1000), xaxt="n",yaxt="n",zlim = c(0,max(img_diags$z, na.rm =TRUE)))
+> points(c(108.125,108.125), c(41.04167, 72.04167), pch = "+",cex=1.2)
+> box()
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/diags_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(zlim = c(0,max(img_diags$z, na.rm =TRUE)))
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/s1.png",
++     width = 12, height = 4, units = "cm", res = 900)
+> par(mai=rep(.03,4))
+> image(img_s1$x, img_s1$y, img_s1$z, col = tim.colors(1000), xaxt="n",yaxt="n")
+> box()
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/s1_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(range(img_s1$z, na.rm=TRUE))
+> dev.off()
+null device 
+          1 
+> 
+> 
+> 
+> png("figs/dist2coast_log.png",
++     width = 12, height = 4, units = "cm", res = 900)
+> par(mai=rep(.03,4))
+> image(img_dist2coast_log$x, img_dist2coast_log$y,
++       img_dist2coast_log$z, col = tim.colors(1000), xaxt="n",yaxt="n")
+> box()
+> dev.off()
+null device 
+          1 
+> 
+> png("figs/dist2coast_log_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(range(img_dist2coast_log$z, na.rm=TRUE))
+> dev.off()
+null device 
+          1 
+> 
+> 
+> png("figs/dem_log.png",
++     width = 12, height = 4, units = "cm", res = 900)
+> par(mai=rep(.03,4))
+> image(img_dem_log$x, img_dem_log$y,
++       img_dem_log$z, col = tim.colors(1000), xaxt="n",yaxt="n")
+> box()
+> dev.off()
+null device 
+          1 
+> 
+> 
+> 
+> png("figs/dem_log_legend.png",
++     width = 2.5, height = 8, units = "cm", res = 900)
+> color_bar(range(img_dem_log$z, na.rm=TRUE))
+> dev.off()
+null device 
+          1 
+> 
+> 
+> 
+> load("data/h.RData")
+> load("data/R.RData")
+> load("data/chol_0.62.RData")
+> 
+> 
+> ## tab matrix properties
+> dens <- function(spam){
++    paste0(round(100* length(spam@entries)/prod(spam@dimension),2) ,"%")
++ }
+> tab <- data.frame(gen_function = c("spam:nearest.dist()",
++                       "spam:wendland.cov()", "spam:chol()"),
++     time = c(h_TIMES[3], R_TIMES[3], P_chol_TIMES[3] )/60,
++                   size = c(format(object.size(h), unit="auto"),
++                       format(object.size(R), unit="auto"),
++                       format(object.size(P_chol), unit="auto")),
++                   density = c(dens(h),dens(R), dens(P_chol)),
++                   int64 = c(FALSE, FALSE, TRUE))
+> xtable(tab)
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Sat Nov 19 11:29:50 2016
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlrlll}
+  \hline
+ & gen\_function & time & size & density & int64 \\ 
+  \hline
+1 & spam:nearest.dist() & 22.88 & 1.4 GiB & 0.02\% & FALSE \\ 
+  2 & spam:wendland.cov() & 0.88 & 1.4 GiB & 0.02\% & FALSE \\ 
+  3 & spam:chol() & 26.05 & 8.5 GiB & 0.19\% & TRUE \\ 
+   \hline
+\end{tabular}
+\end{table}
+> 
+> 
+> xtable(as.data.frame(t(tmp[[ii]]$est[,1:2])))
+% latex table generated in R 3.3.1 by xtable 1.8-2 package
+% Sat Nov 19 11:29:50 2016
+\begin{table}[ht]
+\centering
+\begin{tabular}{rrrrrr}
+  \hline
+ & tau & k & dem\_log & dist2coast\_log & dem\_var25\_log \\ 
+  \hline
+pars & 0.62 & 0.90 & -58.53 & -54.38 & 36.05 \\ 
+  se &  & 0.00 & 0.53 & 0.48 & 0.49 \\ 
+   \hline
+\end{tabular}
+\end{table}
+> 
+> proc.time()
+   user  system elapsed 
+368.938  20.849 390.923 

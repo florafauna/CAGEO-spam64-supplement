@@ -1,0 +1,69 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source("setup.R")
+Loading required package: grid
+Spam version 2.0-05 (2016-11-17) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+gdata: read.xls support for 'XLS' (Excel 97-2004) files ENABLED.
+
+gdata: read.xls support for 'XLSX' (Excel 2007+) files ENABLED.
+
+Attaching package: ‘gdata’
+
+The following object is masked from ‘package:stats’:
+
+    nobs
+
+The following object is masked from ‘package:utils’:
+
+    object.size
+
+The following object is masked from ‘package:base’:
+
+    startsWith
+
+Loading required package: maps
+> 
+> ## Load Data and build R_chol ------------------------------------
+> loadCommandlineArgs() # get 'tau' from command line
+[1] "tau=0"
+> tau <- as.double(tau)
+> load("data/R.RData")
+> P <- R
+> P@entries <- P@entries*tau
+> diag(P) <- diag(P) + rep(1-tau, dim(R)[1])
+> #str(P)
+> P_chol_TIMES <- system.time(P_chol <- chol(P))
+> save(P_chol, P_chol_TIMES, file = paste0("data/chol_",tau,".RData"))
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+1668.207   65.008 1739.856 

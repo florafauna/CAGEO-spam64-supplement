@@ -1,0 +1,198 @@
+
+R version 3.0.1 (2013-05-16) -- "Good Sport"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list=ls())
+> require(raster)
+Loading required package: raster
+Loading required package: sp
+> require(fields)
+Loading required package: fields
+Loading required package: spam
+Loading required package: grid
+Spam version 0.60-0 (2014-08-21) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following object is masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+Loading required package: maps
+> # Setup ---------------------------------------------------
+> rasterOptions(tmpdir="~/compute/TMP_RASTER")
+> 
+> DATA_SOURCE <- "~/compute/Data/DEM/"
+> 
+> 
+> # Download data files -------------------------------------
+> # 1. http://www.ngdc.noaa.gov/mgg/topo/elev/*.gz
+> # --> extract them
+> # 2. http://www.ngdc.noaa.gov/mgg/topo/elev/esri/hdr/
+> 
+> 
+> # append .bil to the data files  --------------------------
+> # file.rename(paste0(DATA_SOURCE,
+> #                    sprintf("%s10g",letters[1:16])),
+> #             paste0(DATA_SOURCE,
+> #                    sprintf("%s10g.bil",letters[1:16])))
+> 
+> # Process -------------------------------------------------
+> 
+> # Read the raster file to get the raster grid
+> r <- raster(sprintf("%s/ndvi-model-1.gri", "data"))
+> 
+> 
+> # Load the elevation
+> tmp <- vector("list", 16)
+> for( i in 1:16){
++     tmp[[i]] <- raster(
++         paste0(DATA_SOURCE,
++                sprintf("%s10g.bil",letters[i])))
++ }
+rgdal: version: 0.8-16, (SVN revision 498)
+Geospatial Data Abstraction Library extensions to R successfully loaded
+Loaded GDAL runtime: GDAL 1.10.1, released 2013/08/26
+Path to GDAL shared files: /usr/share/gdal/1.10
+Loaded PROJ.4 runtime: Rel. 4.8.0, 6 March 2012, [PJ_VERSION: 480]
+Path to PROJ.4 shared files: (autodetected)
+> 
+> all <- do.call(merge, tmp)
+> rm(tmp)
+> 
+> data <- resample(all, r, filename="data/elevation", overwrite = TRUE)
+> 
+> plot(data)
+> 
+> 
+> 
+> # local elevation variance --------------------------------
+> #data <- crop(all.sampled, extent(5,20,40,50))
+> #data <- crop(all.sampled, extent(-10,30,40,60))
+> 
+> elev_var5 <- focal(data, matrix(1,5,5), fun=var, na.rm=T)
+> plot(elev_var5)
+> writeRaster(elev_var5, "data/elevation-variance5", overwrite = TRUE)
+class       : RasterLayer 
+dimensions  : 2160, 4320, 9331200  (nrow, ncol, ncell)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/elevation-variance5.grd 
+names       : layer 
+values      : 0, 2329392  (min, max)
+
+> 
+> 
+> elev_var15 <- focal(data, matrix(1,15,15), fun=var, na.rm=T)
+> plot(elev_var15)
+> writeRaster(elev_var15, "data/elevation-variance15", overwrite = TRUE)
+class       : RasterLayer 
+dimensions  : 2160, 4320, 9331200  (nrow, ncol, ncell)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/elevation-variance15.grd 
+names       : layer 
+values      : 0, 3619278  (min, max)
+
+> 
+> elev_var25 <- focal(data, matrix(1,25,25), fun=var, na.rm=T)
+> plot(elev_var25)
+> writeRaster(elev_var25, "data/elevation-variance25", overwrite = TRUE)
+class       : RasterLayer 
+dimensions  : 2160, 4320, 9331200  (nrow, ncol, ncell)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/elevation-variance25.grd 
+names       : layer 
+values      : 0, 4426294  (min, max)
+
+> 
+> 
+> elev_var31 <- focal(data, matrix(1,31,31), fun=var, na.rm=T)
+> plot(elev_var31)
+> writeRaster(elev_var31, "data/elevation-variance31", overwrite = TRUE)
+class       : RasterLayer 
+dimensions  : 2160, 4320, 9331200  (nrow, ncol, ncell)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/elevation-variance31.grd 
+names       : layer 
+values      : 0, 4614587  (min, max)
+
+> 
+> elev_var51 <- focal(data, matrix(1,51,51), fun=var, na.rm=T)
+> plot(elev_var51)
+> writeRaster(elev_var51, "data/elevation-variance51", overwrite = TRUE)
+class       : RasterLayer 
+dimensions  : 2160, 4320, 9331200  (nrow, ncol, ncell)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/elevation-variance51.grd 
+names       : layer 
+values      : 0, 5312629  (min, max)
+
+> 
+> 
+> 
+> ## w.mean <- focalWeight(data, .1, "Gauss")
+> ## dim(w.mean)
+> ## w.mean.mask <- w.mean
+> ## w.mean.mask[] <- 1
+> 
+> ## focal.func <- function(x) {
+>   
+> ##   dim(x) <- dim(func.weights)
+>   
+> ##   # if the center is NA, then the point should be NA
+> ##   if(!is.finite(x[nrow(x)/2, ncol(x)/2]))
+> ##     return(NA)
+>   
+> ##   if(all(!is.finite(x)))
+> ##     return(NA)
+>   
+> ##   y <- x
+> ##   y[] <- 1
+> ##   y[!is.finite(x)] <- 0
+>   
+> ##   x.2 <- x
+> ##   x.2[!is.finite(x)] <- 0
+>   
+> ##   cov.wt(as.matrix(c(func.weights*x.2)),
+> ##          wt=c(y*func.weights))$cov
+> ## }
+> ## func.weights <- w.mean
+> ## elev.var <- focal(data, w.mean.mask, fun=focal.func,
+> ##                   pad=T,
+> ##                   filename="data/elevation-variance")
+> ## plot(elev.var)
+> 
+> 
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+4046.509  101.255 4166.313 

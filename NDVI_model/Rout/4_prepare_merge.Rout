@@ -1,0 +1,70 @@
+
+R version 3.0.1 (2013-05-16) -- "Good Sport"
+Copyright (C) 2013 The R Foundation for Statistical Computing
+Platform: x86_64-unknown-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> require(raster)
+Loading required package: raster
+Loading required package: sp
+> 
+> 
+> # Globals / Config ----------------------------------------
+> rasterOptions(tmpdir="~/compute/TMP_RASTER")
+> 
+> DATA_DIR <- 'data/'
+> 
+> 
+> # ndvi.diff - Build the residual Field / Load it ----------
+> 
+> ndvi.1 <- raster("data/ndvi-model-1")
+> ndvi.2 <- raster("data/ndvi-model-2")
+> ndvi.3 <- raster("data/ndvi-model-3")
+> elevation <- raster("data/elevation")
+> elevation.var5 <- raster("data/elevation-variance5") 
+> elevation.var15 <- raster("data/elevation-variance15") 
+> elevation.var25 <- raster("data/elevation-variance25") 
+> elevation.var31 <- raster("data/elevation-variance31") 
+> elevation.var51 <- raster("data/elevation-variance51") 
+> dist2coast <- raster("data/dist2coast")
+> 
+> 
+> data.complete <- stack(ndvi.1, ndvi.2, ndvi.3, elevation,
++                        elevation.var5, elevation.var15,
++                        elevation.var25, elevation.var31,
++                        elevation.var51, dist2coast )
+> names(data.complete) <- c("ndvi.1", "ndvi.2", "ndvi.3",
++                           "dem", "dem.var5","dem.var15",
++                           "dem.var25","dem.var31",
++                           "dem.var51", "dist2coast")
+> 
+> writeRaster(data.complete, file="data/complete.nc", overwrite=TRUE)
+Loading required package: ncdf
+class       : RasterBrick 
+dimensions  : 2160, 4320, 9331200, 10  (nrow, ncol, ncell, nlayers)
+resolution  : 0.08333333, 0.08333333  (x, y)
+extent      : -180, 180, -89.99999, 90  (xmin, xmax, ymin, ymax)
+coord. ref. : +proj=longlat +datum=WGS84 +no_defs +ellps=WGS84 +towgs84=0,0,0 
+data source : /compute/flgerb/Consulting/Kaspar_Moesinger/master-thesis/Computers_geoscience/R/fit_model/data/complete.nc 
+names       : X1, X2, X3, X4, X5, X6, X7, X8, X9, X10 
+unknown     : 1, 2, 3, 4, 5, 6, 7, 8, 9, 10 
+varname     : variable 
+
+> 
+> proc.time()
+   user  system elapsed 
+ 78.231  11.707 141.732 

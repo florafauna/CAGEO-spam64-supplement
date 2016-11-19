@@ -1,0 +1,68 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> source("setup.R")
+> lib.loc <- "../spam_libs"
+> library("dotCall64", lib.loc=lib.loc)
+> library("spam", lib.loc=lib.loc)
+Loading required package: grid
+Spam version 2.0-05 (2016-11-17) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+> library("spam64", lib.loc=lib.loc)
+> powerboost()
+> spam_ <- TRUE
+> version_ <- "time_spam64"
+> loadCommandlineArgs()
+[1] "density_=0.031622777"
+[1] "nr_=4"
+> 
+> out <- data.frame(version = version_, nrow = nrow_, density = density_, rep = 1:rep_,
++                   t=NA, prod=NA, cov=NA, chol=NA) 
+> 
+> for(i in 1:rep_){
++     m <- get_matrix(nrow_, density_, invertible = FALSE,
++                     verbose = FALSE, spam = spam_, seed = nr_)
++     n <- get_matrix(nrow_, density_, invertible = FALSE,
++                     verbose = FALSE, spam = spam_, seed = nr_)
++     out[i,"t"] <- system.time(t(m))[3]
++     out[i,"prod"] <- system.time(m%*%n)[3]
++     out[i,"cov"] <- system.time(cov.wend1(m, 1))[3]
++     m <- get_matrix(nrow_, density_, invertible = TRUE,
++                     verbose = FALSE, spam = spam_, seed = nr_)
++     out[i,"chol"] <- system.time(chol.spam(m, memory=list(nnzR=nnzR_,nnzcolindices=nnzcolindices_)))[3]
++     cat(".")
++ }
+....................> 
+> 
+> save(out, file=paste0("data/",version_,"_",nr_,".RData"))
+> 
+> proc.time()
+   user  system elapsed 
+226.338   2.706 231.465 

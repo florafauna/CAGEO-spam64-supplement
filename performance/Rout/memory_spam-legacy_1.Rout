@@ -1,0 +1,68 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list = ls())
+> source("setup.R")
+> library("spam", lib.loc = "../spam_libs/spam_legacy")
+Loading required package: grid
+Spam version 1.4-0 (2016-08-29) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+> powerboost() 
+> spam_ <- TRUE
+> version_ <- "memory_spam-legacy"
+> loadCommandlineArgs()
+[1] "density_=1"
+[1] "nr_=1"
+> 
+> out <- data.frame(version = version_, nrow = nrow_, density = density_,
++                   t_peak_mem=NA, t_after_mem=NA,
++                   prod_peak_mem=NA, prod_after_mem=NA,
++                   cov_peak_mem=NA, cov_after_mem=NA,
++                   chol_peak_mem=NA, chol_after_mem=NA  ) 
+> 
+> print(density_)
+[1] 1
+> print(nr_)
+[1] 1
+> 
+> m <- get_matrix(nrow_, density_, invertible = FALSE, verbose = FALSE, spam = spam_, seed = 1)
+> out[1,c("t_peak_mem","t_after_mem")] <- get_mem(expression(tt <- t(m)))
+> out[1,c("prod_peak_mem","prod_after_mem")] <- get_mem(expression(tt <- m%*%m))
+> out[1,c("cov_peak_mem","cov_after_mem")] <- get_mem(expression(tt <- cov.wend1(m,1)))
+> 
+> m <- get_matrix(nrow_, density_, invertible = TRUE, verbose = FALSE,  spam = spam_, seed = 2)
+> out[1,c("chol_peak_mem","chol_after_mem")] <- get_mem(expression(tt <- chol(m)))
+> 
+> save(out, file=paste0("data/",version_,"_", nr_,".RData"))
+> 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 86.628   1.132  89.551 

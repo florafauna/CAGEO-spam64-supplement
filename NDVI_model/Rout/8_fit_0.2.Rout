@@ -1,0 +1,172 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> source("setup.R")
+Loading required package: grid
+Spam version 2.0-05 (2016-11-17) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+gdata: read.xls support for 'XLS' (Excel 97-2004) files ENABLED.
+
+gdata: read.xls support for 'XLSX' (Excel 2007+) files ENABLED.
+
+Attaching package: ‘gdata’
+
+The following object is masked from ‘package:stats’:
+
+    nobs
+
+The following object is masked from ‘package:utils’:
+
+    object.size
+
+The following object is masked from ‘package:base’:
+
+    startsWith
+
+Loading required package: maps
+> #tau <- .5
+> loadCommandlineArgs() # get 'tau' from command line
+[1] "tau=0.2"
+> tau <- as.double(tau)
+> 
+> 
+> load("data/data.RData")
+> load(paste0("data/chol_",tau,".RData"))
+> load(paste0("data/R.RData"))
+> 
+> neg2loglik_part_gen <- function(P_chol, X, Y, tau, verbose = TRUE){
++     n <- length(Y)
++     
++     neg2loglik_part <- function(theta){
++         if(verbose)
++             cat(".")        
++         k <- theta[1]
++         beta <- theta[-1]
++         
++         P_logdet <- sum(log(diag(P_chol)))
++         const <- n * log(2 * pi)
++         
++         
++         D0_log <- c(X %*% beta)
++         D0_inv <- exp(-D0_log)
++         v <- Y * D0_inv / sqrt(k)
++         
++         d_logdet <- sum(D0_log)
++         logdet <- d_logdet + P_logdet + log(k)*n/2
++         
++         
++         return(const + 2*logdet +
++                sum(v * backsolve(P_chol,
++                                  forwardsolve(P_chol, v))))
++     }
++     return(neg2loglik_part)
++ }
+> 
+> 
+> 
+> formula <- ndvi_scaled ~ 0 + dem_log + dist2coast_log + dem_var25_log
+> optim_control = list(factr = 1e7, parscale = 1/c(100, 1, 1, 1)); scale = TRUE; verbose = TRUE
+> 
+> X <- model_matrix(formula, data, scale = scale, verbose = verbose)
+               dem_log dist2coast_log dem_var25_log
+dem_log           1.00           0.46          0.69
+dist2coast_log    0.46           1.00          0.12
+dem_var25_log     0.69           0.12          1.00
+> Y <- data[,as.character(as.list(formula)[[2]])]
+> n <- length(Y)
+> 
+> beta_init = rep(-2,ncol(X)) ; k_init = .7; tau_init=.5
+> 
+> 
+> neg2loglik_part <- neg2loglik_part_gen(P_chol=P_chol, X=X,Y=Y,tau=tau, verbose = verbose )
+> 
+> res <- optim(par = c(k_init, beta_init),
++              neg2loglik_part,
++              method = "L-BFGS-B",
++              lower = c(0.001, rep(-Inf, ncol(X))),
++              upper = rep(Inf, ncol(X)+1),
++              control = optim_control,
++              hessian = TRUE)
+...........................................................................................................................................................................................................................................> 
+> est <- data.frame(pars = c(tau,res$par),
++                   se = c(NA, 1/sqrt(diag(res$hessian))),
++                   estimated=c(FALSE,rep(TRUE,length(res$par))))
+> dimnames(est)[[1]] <- c("tau", "k", colnames(X))
+> 
+> #save(est, file = "data/est_0.5.RData")
+> #load("data/est_0.5.RData")
+> 
+> detach("package:fields", unload = TRUE)
+> detach("package:spam", unload = TRUE)
+> detach("package:spam64", unload = TRUE)
+> library(fields)
+Loading required package: spam
+Spam version 1.3-0 (2015-10-24) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+> D0 <- diag.spam(exp(c(X %*% est$pars[-c(1:2)])))
+> P <- R*tau + (diag.spam(n)*(1-tau))
+> #str(P)
+> 
+> tmp <- P %*% D0
+> tmp2 <- D0%*%tmp
+> tmp3 <- tmp2*est["k","pars"]
+> S_diag <- diag(tmp3)
+> summary(S_diag)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.4307  0.5486  0.5969  0.6322  0.6796  1.7220 
+> 
+> ## par(mfrow = c(2,1))
+> ## nx <- length(unique(data$x))
+> ## ny <- length(unique(data$y))
+> ## quilt_plot(data[,c("x","y")], data$ndvi_scaled, nx=nx, ny=ny)
+> ## quilt_plot(data[,c("x","y")], S_diag, nx=nx, ny=ny)
+> 
+> BIC <- res$value - sum(est$estimated)*log(nrow(X))
+> 
+> 
+> 
+> out <- list(res = res, est=est, BIC=BIC, S_diag = S_diag)
+> save(out, file = paste0("data/out_",tau,".RData"))
+> 
+> 
+> 
+> 
+> proc.time()
+    user   system  elapsed 
+5476.418  167.208 6938.986 

@@ -1,0 +1,63 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> ## setup ------------ 
+> options(prompt="R> ")
+R> rm(list = ls())
+R> 
+R> simple <- setClass(Class = "simple", slots = c(entry = "numeric"))
+R> simple.init <- function(.Object, entry) {
++     if(max(abs(entry)) < .Machine$integer.max)
++          .Object@entry <- as.integer(entry)
++     else .Object@entry <- entry
++     return(.Object)
++ }
+R> setMethod("initialize", signature(.Object = "simple"), simple.init)
+[1] "initialize"
+R> 
+R> mult <- function(simple, factor) 
++     return(simple(entry = simple@entry * factor[1]))
+R> 
+R> 
+R> print(s1 <- simple(entry = 2^29))
+An object of class "simple"
+Slot "entry":
+[1] 536870912
+
+R> typeof(s1@entry)
+[1] "integer"
+R> s2 <- mult(s1, 8)
+R> typeof(s2@entry)
+[1] "double"
+R> s3 <- mult(s2, 1/4)
+R> typeof(s3@entry)
+[1] "integer"
+R> 
+R> 
+R> s1 <- 1L
+R> 
+R> 
+R> 
+R> 
+R> 
+R> 
+R> 
+> proc.time()
+   user  system elapsed 
+  0.247   0.075   0.332 

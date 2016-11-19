@@ -1,0 +1,70 @@
+
+R version 3.3.1 (2016-06-21) -- "Bug in Your Hair"
+Copyright (C) 2016 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> rm(list=ls())
+> lib.loc <- "../spam_libs"
+> library("dotCall64", lib.loc=lib.loc)
+> library("spam", lib.loc=lib.loc)
+Loading required package: grid
+Spam version 2.0-05 (2016-11-17) is loaded.
+Type 'help( Spam)' or 'demo( spam)' for a short introduction 
+and overview of this package.
+Help for individual functions is also obtained by adding the
+suffix '.spam' to the function name, e.g. 'help( chol.spam)'.
+
+Attaching package: ‘spam’
+
+The following objects are masked from ‘package:base’:
+
+    backsolve, forwardsolve
+
+> library("spam64", lib.loc=lib.loc)
+> 
+> options(prompt="R> ")
+R> 
+R> 
+R> grep(search(), pattern = "spam", value = TRUE)
+[1] "package:spam64" "package:spam"  
+R> options(max.print = 15)
+R> print(s1 <- spam(1:2^30))
+Matrix of dimension 1073741824x1 with (row-wise) nonzero elements:
+
+ [1]  1  2  3  4  5  6  7  8  9 10 11 12 13 14 15
+ [ reached getOption("max.print") -- omitted 1073741809 entries ]
+Class 'spam' (32-bit)
+R> print(s2 <- cbind(s1, s1))
+Matrix of dimension 1073741824x2 with (row-wise) nonzero elements:
+
+ [1] 1 1 2 2 3 3 4 4 5 5 6 6 7 7 8
+ [ reached getOption("max.print") -- omitted 2147483633 entries ]
+Class 'spam' (64-bit)
+R> s2[1:2,]
+     [,1] [,2]
+[1,]    1    1
+[2,]    2    2
+Class 'spam' (32-bit)
+R> 
+R> spam(1, force64 = TRUE)
+     [,1]
+[1,]    1
+Class 'spam' (64-bit)
+R> 
+> proc.time()
+    user   system  elapsed 
+1014.267  157.115  433.573 
